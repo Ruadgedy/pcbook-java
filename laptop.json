@@ -1,0 +1,57 @@
+{
+  "id": "33eda09e-b328-4493-a139-282ab3cf4b36",
+  "brand": "Lenove",
+  "name": "Thinkpad P1",
+  "cpu": {
+    "brand": "Intel",
+    "name": "Core i3-1005G1",
+    "number_cores": 2,
+    "number_threads": 11,
+    "min_ghz": 2.924015915750386,
+    "max_ghz": 3.7922088334163093
+  },
+  "ram": {
+    "value": "41",
+    "unit": "GIGABYTE"
+  },
+  "gpus": [{
+    "brand": "NVIDA",
+    "name": "RX Vega-56",
+    "min_ghz": 1.2615484145726366,
+    "max_ghz": 1.7522861348300651,
+    "memory": {
+      "value": "6",
+      "unit": "GIGABYTE"
+    }
+  }],
+  "storages": [{
+    "driver": "SSD",
+    "memory": {
+      "value": "508",
+      "unit": "GIGABYTE"
+    }
+  }, {
+    "driver": "HDD",
+    "memory": {
+      "value": "2",
+      "unit": "TERABYTE"
+    }
+  }],
+  "screen": {
+    "size_inch": 14.176117,
+    "resolution": {
+      "width": 6186,
+      "height": 3480
+    },
+    "panel": "OLED",
+    "multitouch": true
+  },
+  "keyboard": {
+    "layout": "AZERTY",
+    "backlit": false
+  },
+  "weight_kg": 2.131013328285242,
+  "price_usd": 2304.8713775787983,
+  "release_year": 2019,
+  "updated_at": "2021-11-02T05:17:04.546141Z"
+}

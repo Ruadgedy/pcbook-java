@@ -34,6 +34,21 @@ public final class LaptopServiceOuterClass {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_techschool_pcbook_SearchLaptopResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_techschool_pcbook_UploadImageRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_techschool_pcbook_UploadImageRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_techschool_pcbook_ImageInfo_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_techschool_pcbook_ImageInfo_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_techschool_pcbook_UploadImageResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_techschool_pcbook_UploadImageResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -51,13 +66,21 @@ public final class LaptopServiceOuterClass {
       "topRequest\022)\n\006filter\030\001 \001(\0132\031.techschool." +
       "pcbook.Filter\"A\n\024SearchLaptopResponse\022)\n" +
       "\006laptop\030\001 \001(\0132\031.techschool.pcbook.Laptop" +
-      "2\327\001\n\rLaptopService\022a\n\014CreateLaptop\022&.tec" +
-      "hschool.pcbook.CreateLaptopRequest\032\'.tec" +
-      "hschool.pcbook.CreateLaptopResponse\"\000\022c\n" +
-      "\014SearchLaptop\022&.techschool.pcbook.Search" +
-      "LaptopRequest\032\'.techschool.pcbook.Search" +
-      "LaptopResponse\"\0000\001B*\n\037com.gitlab.techsch" +
-      "ool.pcbook.pbP\001Z\005./;pbb\006proto3"
+      "\"`\n\022UploadImageRequest\022,\n\004info\030\001 \001(\0132\034.t" +
+      "echschool.pcbook.ImageInfoH\000\022\024\n\nchunk_da" +
+      "ta\030\002 \001(\014H\000B\006\n\004data\"2\n\tImageInfo\022\021\n\tlapto" +
+      "p_id\030\001 \001(\t\022\022\n\nimage_type\030\002 \001(\t\"/\n\023Upload" +
+      "ImageResponse\022\n\n\002id\030\001 \001(\t\022\014\n\004size\030\002 \001(\r2" +
+      "\271\002\n\rLaptopService\022a\n\014CreateLaptop\022&.tech" +
+      "school.pcbook.CreateLaptopRequest\032\'.tech" +
+      "school.pcbook.CreateLaptopResponse\"\000\022c\n\014" +
+      "SearchLaptop\022&.techschool.pcbook.SearchL" +
+      "aptopRequest\032\'.techschool.pcbook.SearchL" +
+      "aptopResponse\"\0000\001\022`\n\013UploadImage\022%.techs" +
+      "chool.pcbook.UploadImageRequest\032&.techsc" +
+      "hool.pcbook.UploadImageResponse\"\000(\001B*\n\037c" +
+      "om.gitlab.techschool.pcbook.pbP\001Z\005./;pbb" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -89,6 +112,24 @@ public final class LaptopServiceOuterClass {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_techschool_pcbook_SearchLaptopResponse_descriptor,
         new java.lang.String[] { "Laptop", });
+    internal_static_techschool_pcbook_UploadImageRequest_descriptor =
+      getDescriptor().getMessageTypes().get(4);
+    internal_static_techschool_pcbook_UploadImageRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_techschool_pcbook_UploadImageRequest_descriptor,
+        new java.lang.String[] { "Info", "ChunkData", "Data", });
+    internal_static_techschool_pcbook_ImageInfo_descriptor =
+      getDescriptor().getMessageTypes().get(5);
+    internal_static_techschool_pcbook_ImageInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_techschool_pcbook_ImageInfo_descriptor,
+        new java.lang.String[] { "LaptopId", "ImageType", });
+    internal_static_techschool_pcbook_UploadImageResponse_descriptor =
+      getDescriptor().getMessageTypes().get(6);
+    internal_static_techschool_pcbook_UploadImageResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_techschool_pcbook_UploadImageResponse_descriptor,
+        new java.lang.String[] { "Id", "Size", });
     com.gitlab.techschool.pcbook.pb.LaptopMessage.getDescriptor();
     com.gitlab.techschool.pcbook.pb.FilterMessage.getDescriptor();
   }

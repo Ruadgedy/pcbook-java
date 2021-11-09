@@ -2,12 +2,14 @@ package com.gitlab.techschool.pcbook.service;
 
 
 import com.gitlab.techschool.pcbook.pb.*;
+import com.google.protobuf.ByteString;
 import io.grpc.Context;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -19,10 +21,12 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 
 	private static final Logger logger = Logger.getLogger(LaptopService.class.getName());
 
-	private LaptopStore store;
+	private LaptopStore laptopStore;
+	private ImageStore imageStore;
 
-	public LaptopService(LaptopStore store) {
-		this.store = store;
+	public LaptopService(LaptopStore laptopStore, ImageStore imageStore) {
+		this.laptopStore = laptopStore;
+		this.imageStore = imageStore;
 	}
 
 	@Override
@@ -69,7 +73,7 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 		Laptop other = laptop.toBuilder().setId(uuid.toString()).build();
 		// Save other laptop tp the in-memory store
 		try {
-			store.Save(other);
+			laptopStore.Save(other);
 		} catch (AlreadyExistsException e) {
 			responseObserver.onError(
 					Status.ALREADY_EXISTS
@@ -101,7 +105,7 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 		Filter filter = request.getFilter();
 		logger.info("got a search-laptop request with filter:\n" + filter);
 
-		store.Search(Context.current(), filter,laptop -> {
+		laptopStore.Search(Context.current(), filter, laptop -> {
 			logger.info("found laptop with ID: " + laptop.getId());
 			SearchLaptopResponse response = SearchLaptopResponse.newBuilder().setLaptop(laptop).build();
 			responseObserver.onNext(response);
@@ -109,5 +113,110 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 
 		responseObserver.onCompleted();
 		logger.info("search laptop complete");
+	}
+
+	// gRPC stream输入 有着极大的不同
+	@Override
+	public StreamObserver<UploadImageRequest> uploadImage(StreamObserver<UploadImageResponse> responseObserver) {
+		return new StreamObserver<UploadImageRequest>() {
+			// 定义最大图片大小
+			private static final int maxImageSize = 1 << 20; // 1Mbit
+			private String laptopID;
+			private String imageType;
+			private ByteArrayOutputStream imageData;
+
+			@Override
+			public void onNext(UploadImageRequest request) {
+				// 上传图片的首个请求是ImageInfo字段
+				if (request.getDataCase() == UploadImageRequest.DataCase.INFO) {
+					ImageInfo info = request.getInfo();
+					logger.info("receive image info:\n" + info);
+
+					laptopID = info.getLaptopId();
+					imageType = info.getImageType();
+					// 初始化
+					imageData = new ByteArrayOutputStream();
+
+					// check laptop exists
+					Laptop found = laptopStore.Find(laptopID);
+					if (found == null){
+						responseObserver.onError(
+								Status.NOT_FOUND
+								.withDescription("laptop ID does not exists")
+								.asRuntimeException()
+						);
+					}
+
+					return;
+				}
+
+				// 图片的数据字段
+				ByteString chunkData = request.getChunkData();
+				logger.info("receive image chunk with size: " + chunkData.size());
+
+				if (imageData == null){
+					logger.info("image info wasn't sent before");
+					responseObserver.onError(
+							Status.INVALID_ARGUMENT
+							.withDescription("image info wasn't sent before")
+							.asRuntimeException()
+					);
+					return;
+				}
+
+				// 传输图片chunk时，统计图片总大小
+				int size = imageData.size() + chunkData.size();
+				// 如果图片过大，则终止传输
+				if (size > maxImageSize) {
+					logger.info("image is too large: " + size);
+					responseObserver.onError(
+							Status.INVALID_ARGUMENT
+							.withDescription("image is too large: " + size)
+							.asRuntimeException()
+					);
+					return;
+				}
+
+				try {
+					chunkData.writeTo(imageData);
+				} catch (IOException e) {
+					responseObserver.onError(
+							Status.INTERNAL
+							.withDescription("cannot write chunk data:" + e.getMessage())
+							.asRuntimeException()
+					);
+					return;
+				}
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				logger.warning(t.getMessage());
+			}
+
+			// 这个函数被调用时，代表server已经收到了所有的image chunk data
+			@Override
+			public void onCompleted() {
+				String imageID = "";
+				int imageSize = imageData.size();
+
+				try {
+					imageID = imageStore.Save(laptopID,imageType,imageData);
+				} catch (IOException e) {
+					responseObserver.onError(
+							Status.INTERNAL
+							.withDescription("cannot save image to the store:" + e.getMessage())
+							.asRuntimeException()
+					);
+				}
+
+				UploadImageResponse response = UploadImageResponse.newBuilder()
+						.setId(imageID)
+						.setSize(imageSize)
+						.build();
+				responseObserver.onNext(response);
+				responseObserver.onCompleted();
+			}
+		};
 	}
 }

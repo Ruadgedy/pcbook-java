@@ -27,6 +27,7 @@ public class LaptopClient {
 	private static final Logger logger = Logger.getLogger(LaptopClient.class.getName());
 
 	private final ManagedChannel channel;
+	// 阻塞式stub
 	private final LaptopServiceGrpc.LaptopServiceBlockingStub blockingStub;
 	// 不能使用BlockingStub去调用streaming RPC
 	private final LaptopServiceGrpc.LaptopServiceStub asyncStub;
@@ -74,7 +75,7 @@ public class LaptopClient {
 
 		// The output of this call will be another StreamObserver of UploadImageRequest
 		StreamObserver<UploadImageRequest> requestObserver = asyncStub.withDeadlineAfter(5, TimeUnit.SECONDS)
-				.uploadImage(new StreamObserver<UploadImageResponse>() {
+				.uploadImage(new StreamObserver<UploadImageResponse>() {    // 拿到server端的响应
 					@Override
 					public void onNext(UploadImageResponse response) {
 						logger.info("receive response:\n" + response);
@@ -150,7 +151,7 @@ public class LaptopClient {
 		Generator generator = new Generator();
 
 		try {
-			// test create and search laptops
+			// TODO: test create and search laptops
 //			for (int i = 0; i < 10; i++) {
 //				Laptop laptop = generator.NewLaptop();
 //				client.createLaptop(laptop);

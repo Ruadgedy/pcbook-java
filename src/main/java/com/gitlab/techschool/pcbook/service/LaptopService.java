@@ -92,7 +92,7 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 
 		// 创建响应
 		CreateLaptopResponse response = CreateLaptopResponse.newBuilder().setId(other.getId()).build();
-		// 传递响应
+		// 向client传递响应
 		responseObserver.onNext(response);
 		// 告诉客户端，rpc通信结束
 		responseObserver.onCompleted();
@@ -100,6 +100,7 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 		logger.info("saved laptop with ID: " + other.getId());
 	}
 
+	// gRPC Stream 输出
 	@Override
 	public void searchLaptop(SearchLaptopRequest request, StreamObserver<SearchLaptopResponse> responseObserver) {
 		Filter filter = request.getFilter();
@@ -115,12 +116,12 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 		logger.info("search laptop complete");
 	}
 
-	// gRPC stream输入 有着极大的不同
+	// gRPC stream输入 有着极大的不同，会发现输入成为了返回值
 	@Override
 	public StreamObserver<UploadImageRequest> uploadImage(StreamObserver<UploadImageResponse> responseObserver) {
 		return new StreamObserver<UploadImageRequest>() {
 			// 定义最大图片大小
-			private static final int maxImageSize = 1 << 20; // 1Mbit
+			private static final int maxImageSize = 1 << 23; // 1Mbit
 			private String laptopID;
 			private String imageType;
 			private ByteArrayOutputStream imageData;
@@ -146,7 +147,6 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 								.asRuntimeException()
 						);
 					}
-
 					return;
 				}
 
@@ -178,6 +178,7 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 				}
 
 				try {
+					// 将数据流写入到输出流
 					chunkData.writeTo(imageData);
 				} catch (IOException e) {
 					responseObserver.onError(

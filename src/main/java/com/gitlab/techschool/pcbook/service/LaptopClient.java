@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -151,30 +152,12 @@ public class LaptopClient {
 		Generator generator = new Generator();
 
 		try {
-			// TODO: test create and search laptops
-//			for (int i = 0; i < 10; i++) {
-//				Laptop laptop = generator.NewLaptop();
-//				client.createLaptop(laptop);
-//			}
-//
-//			Memory minRam = Memory.newBuilder()
-//					.setValue(8)
-//					.setUnit(Memory.Unit.GIGABYTE)
-//					.build();
-//
-//			Filter filter = Filter.newBuilder()
-//					.setMaxPriceUsd(3000)
-//					.setMinCpuCores(4)
-//					.setMinCpuGhz(2.5)
-//					.setMinRam(minRam)
-//					.build();
-//
-//			client.searchLaptop(filter);
 
 			// TODO: Test upload laptop image
 			Laptop laptop = generator.NewLaptop();
-			client.createLaptop(laptop);    // 新建laptop
-			client.uploadImages(laptop.getId(),"img/laptop.png");   // 上传图片
+//			client.createLaptop(laptop);    // 新建laptop
+//			client.uploadImages(laptop.getId(),"img/laptop.png");   // 上传图片
+			testRateLaptop(client,generator);
 		}finally {
 			client.shutdown();
 		}
@@ -194,5 +177,107 @@ public class LaptopClient {
 			logger.info("- found: " + laptop.getId());
 		}
 		logger.info("search complete");
+	}
+
+	public void rateLaptop(String[] laptopIDs, double[] scores){
+		CountDownLatch finishLatch = new CountDownLatch(1);
+		StreamObserver<RateLaptopRequest> requestStreamObserver = asyncStub.withDeadlineAfter(5, TimeUnit.SECONDS)
+				.rateLaptop(new StreamObserver<RateLaptopResponse>() {
+					@Override
+					public void onNext(RateLaptopResponse response) {
+						logger.info("laptop rated: id = " + response.getLaptopId() +
+								", count = " + response.getRatedCount() +
+								", average = " + response.getAverageScore()
+						);
+					}
+
+					@Override
+					public void onError(Throwable t) {
+						logger.log(Level.SEVERE,"rate laptop failed: " + t.getMessage());
+						finishLatch.countDown();
+					}
+
+					@Override
+					public void onCompleted() {
+						logger.info("rate laptop completed");
+						finishLatch.countDown();
+					}
+				});
+
+		int n = laptopIDs.length;
+		for (int i = 0; i < n; i++) {
+			RateLaptopRequest request = RateLaptopRequest.newBuilder().setLaptopId(laptopIDs[i]).setScore(scores[i]).build();
+			requestStreamObserver.onNext(request);
+			logger.info("sent rate-laptop request: id = " + request.getLaptopId() + ", score = " + request.getScore());
+		}
+
+		requestStreamObserver.onCompleted();
+		try {
+			if (!finishLatch.await(1,TimeUnit.MINUTES)){
+				logger.warning("request cannot finish within 1 minute");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void testSearchLaptop(LaptopClient client, Generator generator){
+		// TODO: test create and search laptops
+		for (int i = 0; i < 10; i++) {
+			Laptop laptop = generator.NewLaptop();
+			client.createLaptop(laptop);
+		}
+
+		Memory minRam = Memory.newBuilder()
+				.setValue(8)
+				.setUnit(Memory.Unit.GIGABYTE)
+				.build();
+
+		Filter filter = Filter.newBuilder()
+				.setMaxPriceUsd(3000)
+				.setMinCpuCores(4)
+				.setMinCpuGhz(2.5)
+				.setMinRam(minRam)
+				.build();
+
+		client.searchLaptop(filter);
+	}
+
+	public static void testCreateLaptop(LaptopClient client, Generator generator){
+		Laptop laptop = generator.NewLaptop();
+		client.createLaptop(laptop);
+	}
+
+	public static void testUploadImage(LaptopClient client, Generator generator) throws InterruptedException {
+		Laptop laptop = generator.NewLaptop();
+		client.createLaptop(laptop);
+		client.uploadImages(laptop.getId(),"tmp/laptop.jpg");
+	}
+
+	public static void testRateLaptop(LaptopClient client, Generator generator) {
+		int n = 3;
+		String[] laptopIDs = new String[n];
+
+		for (int i = 0; i < n; i++) {
+			Laptop laptop = generator.NewLaptop();
+			laptopIDs[i] = laptop.getId();
+			client.createLaptop(laptop);
+		}
+
+		Scanner scanner = new Scanner(System.in);
+		while (true){
+			logger.info("rate laptop (y/n)?");
+			String answer = scanner.nextLine();
+			if (answer.toLowerCase().trim().equals("n")){
+				break;
+			}
+
+			double[] scores = new double[n];
+			for (int i = 0; i < n; i++) {
+				scores[i] = generator.NewLaptopScore();
+			}
+
+			client.rateLaptop(laptopIDs,scores);
+		}
 	}
 }

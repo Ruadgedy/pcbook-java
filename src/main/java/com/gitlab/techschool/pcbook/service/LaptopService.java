@@ -23,10 +23,12 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 
 	private LaptopStore laptopStore;
 	private ImageStore imageStore;
+	private RatingStore ratingStore;
 
-	public LaptopService(LaptopStore laptopStore, ImageStore imageStore) {
+	public LaptopService(LaptopStore laptopStore, ImageStore imageStore, RatingStore ratingStore) {
 		this.laptopStore = laptopStore;
 		this.imageStore = imageStore;
+		this.ratingStore = ratingStore;
 	}
 
 	@Override
@@ -216,6 +218,47 @@ public class LaptopService extends LaptopServiceGrpc.LaptopServiceImplBase {
 						.setSize(imageSize)
 						.build();
 				responseObserver.onNext(response);
+				responseObserver.onCompleted();
+			}
+		};
+	}
+
+	@Override
+	public StreamObserver<RateLaptopRequest> rateLaptop(StreamObserver<RateLaptopResponse> responseObserver) {
+		return new StreamObserver<RateLaptopRequest>() {
+			@Override
+			public void onNext(RateLaptopRequest request) {
+				String laptopId = request.getLaptopId();
+				double score = request.getScore();
+
+				logger.info("receive rate-laptop request: id = " + laptopId + ", score = " + score);
+
+				Laptop found = laptopStore.Find(laptopId);
+				if (found == null){
+					responseObserver.onError(
+							Status.NOT_FOUND
+							.withDescription("laptopID does not exists")
+							.asRuntimeException()
+					);
+					return;
+				}
+
+				Rating rating = ratingStore.Add(laptopId, score);
+				RateLaptopResponse response = RateLaptopResponse.newBuilder()
+						.setLaptopId(laptopId)
+						.setRatedCount(rating.getCount())
+						.setAverageScore(rating.getSum() / rating.getCount())
+						.build();
+				responseObserver.onNext(response);
+			}
+
+			@Override
+			public void onError(Throwable t) {
+				logger.warning(t.getMessage() );
+			}
+
+			@Override
+			public void onCompleted() {
 				responseObserver.onCompleted();
 			}
 		};

@@ -248,6 +248,10 @@ public class Generator {
 		return null;
 	}
 
+	public double NewLaptopScore() {
+		return randomInt(1, 10);
+	}
+
 	public static void main(String[] args) {
 		Generator generator = new Generator();
 		Laptop laptop = generator.NewLaptop();
